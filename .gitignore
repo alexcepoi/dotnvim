@@ -1,0 +1,5 @@
+# Compiled packer packages
+plugin/
+
+# Local untracked package
+lua/local/
