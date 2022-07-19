@@ -8,13 +8,13 @@ vim.opt.foldenable = false
 -- Search
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
-vim.api.nvim_set_keymap("n", "<cr>", ":silent noh<cr><cr>", { noremap = true, silent = true })
+vim.keymap.set("n", "<cr>", ":silent noh<cr><cr>", { silent = true })
 
 -- Buffers
 for key, cmd in pairs({ h = "bp", j = "bd", k = "enew", l = "bn" }) do
-  vim.api.nvim_set_keymap("n", "<C-" .. key .. ">", "<C-w>" .. key, { noremap = true })
-  vim.api.nvim_set_keymap("n", "<M-" .. key .. ">", ":" .. cmd .. "<cr>", { noremap = true })
-  vim.api.nvim_set_keymap("n", "<leader>" .. key, ":" .. cmd .. "<cr>", { noremap = true })
+  vim.keymap.set("n", "<C-" .. key .. ">", "<C-w>" .. key)
+  vim.keymap.set("n", "<M-" .. key .. ">", ":" .. cmd .. "<cr>")
+  vim.keymap.set("n", "<leader>" .. key, ":" .. cmd .. "<cr>")
 end
 
 -- Netrw
@@ -23,10 +23,14 @@ vim.g.netrw_dirhistmax = 0
 vim.g.netrw_hide = 1
 vim.g.netrw_list_hide = "^\\./$"
 
-vim.api.nvim_set_keymap("n", "-", ":Explore!<cr>", { noremap = true, silent = true })
-vim.cmd([[
-  augroup dotvim_netrw
-    autocmd!
-    autocmd FileType netrw noremap <buffer> <silent> <nowait> q :bd<cr>
-  augroup end
-]])
+vim.keymap.set("n", "-", ":Explore!<cr>", { silent = true })
+local augroup_netrw = vim.api.nvim_create_augroup("dotnvim_netrw", { clear = true })
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "netrw",
+  group = augroup_netrw,
+  callback = function()
+    vim.keymap.set("", "q", function()
+      vim.api.nvim_buf_delete(0, {})
+    end, { buffer = true, nowait = true })
+  end,
+})

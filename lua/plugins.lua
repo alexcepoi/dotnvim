@@ -42,8 +42,8 @@ require("packer").startup({
 
         vim.opt.showmode = false
         for i = 1, 9 do
-          vim.api.nvim_set_keymap("n", "<M-" .. i .. ">", ":LualineBuffersJump " .. i .. "<cr>", { silent = true })
-          vim.api.nvim_set_keymap("n", "<leader>" .. i, ":LualineBuffersJump " .. i .. "<cr>", { silent = true })
+          vim.keymap.set("n", "<M-" .. i .. ">", ":LualineBuffersJump " .. i .. "<cr>", { silent = true })
+          vim.keymap.set("n", "<leader>" .. i, ":LualineBuffersJump " .. i .. "<cr>", { silent = true })
         end
       end,
     })
@@ -62,16 +62,24 @@ require("packer").startup({
     -- Emacs-style command line (for M-d, C-k)
     use("houtsnip/vim-emacscommandline")
 
+    -- Remember last cursor position
+    use({
+      "ethanholz/nvim-lastplace",
+      config = function()
+        require("nvim-lastplace").setup()
+      end,
+    })
+
     --Improved search
     use({
       "haya14busa/vim-asterisk",
       config = function()
         vim.g["asterisk#keeppos"] = 1
 
-        vim.api.nvim_set_keymap("", "*", "<Plug>(asterisk-z*)", {})
-        vim.api.nvim_set_keymap("", "#", "<Plug>(asterisk-z#)", {})
-        vim.api.nvim_set_keymap("", "g*", "<Plug>(asterisk-gz*)", {})
-        vim.api.nvim_set_keymap("", "g#", "<Plug>(asterisk-gz#)", {})
+        vim.keymap.set("", "*", "<Plug>(asterisk-z*)")
+        vim.keymap.set("", "#", "<Plug>(asterisk-z#)")
+        vim.keymap.set("", "g*", "<Plug>(asterisk-gz*)")
+        vim.keymap.set("", "g#", "<Plug>(asterisk-gz#)")
       end,
     })
 
@@ -79,17 +87,19 @@ require("packer").startup({
     use({
       "justinmk/vim-dirvish",
       config = function()
-        vim.api.nvim_set_keymap("n", "-", "<Plug>(dirvish_up)", {})
+        vim.keymap.set("n", "-", "<Plug>(dirvish_up)")
         vim.g.dirvish_mode = ":sort ,^.*[\\/],"
 
-        vim.cmd([[
-          augroup dotvim_dirvish
-            autocmd!
-            autocmd FileType dirvish nmap <buffer> q <Plug>(dirvish_quit)
-            autocmd FileType dirvish silent! unmap <buffer> /
-            autocmd FileType dirvish silent! unmap <buffer> ?
-          augroup END
-        ]])
+        local augroup_dirvish = vim.api.nvim_create_augroup("dotnvim_dirvish", { clear = true })
+        vim.api.nvim_create_autocmd("FileType", {
+          pattern = "dirvish",
+          group = augroup_dirvish,
+          callback = function()
+            vim.keymap.set("n", "q", "<Plug>(dirvish_quit)", { buffer = true })
+            vim.cmd("silent! unmap <buffer> /")
+            vim.cmd("silent! unmap <buffer> ?")
+          end,
+        })
       end,
     })
 
@@ -97,9 +107,9 @@ require("packer").startup({
     use({
       "kazhala/close-buffers.nvim",
       config = function()
-        vim.api.nvim_set_keymap("n", "<M-j>", ":BDelete! this<cr>", { noremap = true, silent = true })
-        vim.api.nvim_set_keymap("n", "<leader>j", ":BDelete! this<cr>", { noremap = true, silent = true })
-        vim.api.nvim_set_keymap("n", "<leader>x", ":BDelete! hidden<cr>", { noremap = true, silent = true })
+        vim.keymap.set("n", "<M-j>", ":BDelete! this<cr>", { silent = true })
+        vim.keymap.set("n", "<leader>j", ":BDelete! this<cr>", { silent = true })
+        vim.keymap.set("n", "<leader>x", ":BDelete! hidden<cr>", { silent = true })
       end,
     })
 
@@ -118,16 +128,17 @@ require("packer").startup({
         vim.g.undotree_SetFocusWhenToggle = 1
         vim.g.undotree_TreeNodeShape = "o"
         vim.g.undotree_SplitWidth = 40
-        vim.api.nvim_set_keymap("n", "<leader>u", ":UndotreeToggle<cr>", { noremap = true, silent = true })
+        vim.keymap.set("n", "<leader>u", ":UndotreeToggle<cr>", { silent = true })
       end,
     })
 
     -- Integrate copy/paste with clipboards
     use({
+      -- TODO(alexcepoi): Switch to "ojroques/nvim-osc52"
       "ojroques/vim-oscyank",
       config = function()
         vim.cmd([[
-          augroup dotvim_oscyank
+          augroup dotnvim_oscyank
             autocmd!
             autocmd TextYankPost * if v:event.operator is 'y' && v:event.regname is '' | execute 'OSCYankReg "' | endif
           augroup end
@@ -307,12 +318,12 @@ require("packer").startup({
           vim.keymap.set("n", "<C-\\>", ":TroubleToggle document_diagnostics<cr>", bufopts)
 
           -- Autoformat on buffer write
-          local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
+          local augroup_lsp = vim.api.nvim_create_augroup("dotnvim_lsp", {})
           if client.supports_method("textDocument/formatting") then
             vim.api.nvim_buf_set_option(0, "formatexpr", "v:lua.vim.lsp.formatexpr()")
-            vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
+            vim.api.nvim_clear_autocmds({ group = augroup_lsp, buffer = bufnr })
             vim.api.nvim_create_autocmd("BufWritePre", {
-              group = augroup,
+              group = augroup_lsp,
               buffer = bufnr,
               callback = vim.lsp.buf.formatting_sync,
             })
