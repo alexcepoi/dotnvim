@@ -302,7 +302,7 @@ require("packer").startup({
           vim.keymap.set("n", "<leader>x", vim.lsp.buf.rename, bufopts)
           vim.keymap.set("n", "<leader>z", ":CodeActionMenu<cr>", bufopts)
 
-          vim.keymap.set("n", "<leader>h", vim.lsp.buf.hover, bufopts)
+          vim.keymap.set("n", "<leader>?", vim.lsp.buf.hover, bufopts)
           vim.keymap.set("n", "<leader>r", ":TroubleToggle lsp_references<cr>", bufopts)
           vim.keymap.set("n", "<C-\\>", ":TroubleToggle document_diagnostics<cr>", bufopts)
 

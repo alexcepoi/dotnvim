@@ -11,20 +11,11 @@ vim.opt.smartcase = true
 vim.api.nvim_set_keymap("n", "<cr>", ":silent noh<cr><cr>", { noremap = true, silent = true })
 
 -- Buffers
-vim.api.nvim_set_keymap("n", "<C-j>", "<C-w>j", { noremap = true })
-vim.api.nvim_set_keymap("n", "<C-k>", "<C-w>k", { noremap = true })
-vim.api.nvim_set_keymap("n", "<C-l>", "<C-w>l", { noremap = true })
-vim.api.nvim_set_keymap("n", "<C-h>", "<C-w>h", { noremap = true })
-
-vim.api.nvim_set_keymap("n", "<M-h>", ":bp<cr>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "<M-l>", ":bn<cr>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "<M-j>", ":bd<cr>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "<M-k>", ":enew<cr>", { noremap = true, silent = true })
-
-vim.api.nvim_set_keymap("n", "<leader>h", ":bp<cr>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "<leader>l", ":bn<cr>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "<leader>j", ":bd<cr>", { noremap = true, silent = true })
-vim.api.nvim_set_keymap("n", "<leader>k", ":enew<cr>", { noremap = true, silent = true })
+for key, cmd in pairs({ h = "bp", j = "bd", k = "enew", l = "bn" }) do
+  vim.api.nvim_set_keymap("n", "<C-" .. key .. ">", "<C-w>" .. key, { noremap = true })
+  vim.api.nvim_set_keymap("n", "<M-" .. key .. ">", ":" .. cmd .. "<cr>", { noremap = true })
+  vim.api.nvim_set_keymap("n", "<leader>" .. key, ":" .. cmd .. "<cr>", { noremap = true })
+end
 
 -- Netrw
 vim.g.netrw_banner = 0
