@@ -174,7 +174,9 @@ require("packer").startup({
     use({
       "neovim/nvim-lspconfig",
       requires = {
-        "williamboman/nvim-lsp-installer",
+        "williamboman/mason.nvim",
+        "williamboman/mason-lspconfig.nvim",
+        "WhoIsSethDaniel/mason-tool-installer.nvim",
         {
           "jose-elias-alvarez/null-ls.nvim",
           requires = "nvim-lua/plenary.nvim",
@@ -254,7 +256,10 @@ require("packer").startup({
                 ["<C-p>"] = cmp.mapping.select_prev_item(),
                 ["<C-n>"] = cmp.mapping.select_next_item(),
                 ["<C-e>"] = cmp.mapping.abort(),
-                ["<CR>"] = cmp.mapping.confirm({ behavior = cmp.ConfirmBehavior.Replace, select = false }),
+                ["<CR>"] = cmp.mapping.confirm({
+                  behavior = cmp.ConfirmBehavior.Replace,
+                  select = false,
+                }),
                 ["<Tab>"] = cmp.mapping(function(fallback)
                   if cmp.visible() then
                     cmp.select_next_item()
@@ -281,9 +286,16 @@ require("packer").startup({
         },
       },
       config = function()
-        require("nvim-lsp-installer").setup({
+        require("mason").setup({
           automatic_installation = false,
           ui = { border = "single" },
+        })
+        require("mason-lspconfig").setup({
+          ensure_installed = { "sumneko_lua" },
+        })
+        require("mason-tool-installer").setup({
+          ensure_installed = { "stylua", "shfmt", "shellcheck" },
+          auto_update = true,
         })
 
         -- Make LSP diagnostics less invasive.
@@ -318,15 +330,19 @@ require("packer").startup({
           vim.keymap.set("n", "<C-\\>", ":TroubleToggle document_diagnostics<cr>", bufopts)
 
           -- Autoformat on buffer write
-          local augroup_lsp = vim.api.nvim_create_augroup("dotnvim_lsp", {})
           if client.supports_method("textDocument/formatting") then
-            vim.api.nvim_buf_set_option(0, "formatexpr", "v:lua.vim.lsp.formatexpr()")
-            vim.api.nvim_clear_autocmds({ group = augroup_lsp, buffer = bufnr })
+            local augroup_lsp_fmt = vim.api.nvim_create_augroup("dotnvim_lsp_fmt", { clear = false })
+            vim.api.nvim_clear_autocmds({ group = augroup_lsp_fmt, buffer = bufnr })
+
             vim.api.nvim_create_autocmd("BufWritePre", {
-              group = augroup_lsp,
+              group = augroup_lsp_fmt,
               buffer = bufnr,
               callback = vim.lsp.buf.formatting_sync,
             })
+          end
+
+          if client.supports_method("textDocument/rangeFormatting") then
+            vim.api.nvim_buf_set_option(0, "formatexpr", "v:lua.vim.lsp.formatexpr()")
           end
         end
 
@@ -342,7 +358,11 @@ require("packer").startup({
           root_dir = nvim_lsp.util.root_pattern(".clangd", ".git", "WORKSPACE"),
         })
         nvim_lsp.sumneko_lua.setup({
-          on_attach = on_attach,
+          on_attach = function(client, bufnr)
+            client.resolved_capabilities.document_formatting = false
+            client.resolved_capabilities.document_range_formatting = false
+            on_attach(client, bufnr)
+          end,
           capabilities = capabilities,
           settings = {
             Lua = {
@@ -352,14 +372,34 @@ require("packer").startup({
               telemetry = { enable = false },
             },
           },
+          root_dir = nvim_lsp.util.root_pattern(".git", "WORKSPACE"),
         })
 
         local null_ls = assert(require("null-ls"))
         null_ls.setup({
           sources = {
-            null_ls.builtins.diagnostics.buildifier.with({
-              filetypes = { "bzl" },
+            null_ls.builtins.formatting.stylua.with({
+              extra_args = function(params)
+                local utils = assert(require("null-ls.utils")).make_conditional_utils()
+                if utils.root_has_file("stylua.toml") then
+                  return {}
+                else
+                  return {
+                    "--indent-type",
+                    (params.options.insertSpaces and "spaces" or "tabs"),
+                    "--indent-width",
+                    params.options.tabSize,
+                  }
+                end
+              end,
             }),
+            null_ls.builtins.formatting.shfmt.with({
+              extra_args = function(params)
+                return { "-i", (params.options.insertSpaces and params.options.tabSize or 0), "-s" }
+              end,
+            }),
+            null_ls.builtins.diagnostics.shellcheck,
+            null_ls.builtins.diagnostics.buildifier,
           },
           on_attach = on_attach,
           capabilities = capabilities,
