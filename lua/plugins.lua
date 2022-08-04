@@ -407,6 +407,11 @@ require("packer").startup({
         })
       end,
     })
+    -- OS syntax highlighting
+    if vim.fn.has("unix") and string.find(vim.loop.os_uname().release, "gentoo") then
+      use("https://anongit.gentoo.org/git/proj/gentoo-syntax.git")
+      use("https://anongit.gentoo.org/git/proj/eselect-syntax.git")
+    end
   end,
   config = {
     display = {
