@@ -134,15 +134,24 @@ require("packer").startup({
 
     -- Integrate copy/paste with clipboards
     use({
-      -- TODO(alexcepoi): Switch to "ojroques/nvim-osc52"
-      "ojroques/vim-oscyank",
+      "ojroques/nvim-osc52",
       config = function()
-        vim.cmd([[
-          augroup dotnvim_oscyank
-            autocmd!
-            autocmd TextYankPost * if v:event.operator is 'y' && v:event.regname is '' | execute 'OSCYankReg "' | endif
-          augroup end
-        ]])
+        require("osc52").setup()
+
+        local function copy(lines, _)
+          require("osc52").copy(table.concat(lines, "\n"))
+        end
+
+        local function paste()
+          return { vim.fn.split(vim.fn.getreg(""), "\n"), vim.fn.getregtype("") }
+        end
+
+        vim.opt.clipboard = { "unnamed" }
+        vim.g.clipboard = {
+          name = "osc52",
+          copy = { ["*"] = copy },
+          paste = { ["*"] = paste },
+        }
       end,
     })
 
