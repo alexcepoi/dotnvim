@@ -6,6 +6,8 @@ require("packer").startup({
     -- General interface
     use({
       "RRethy/nvim-base16",
+      -- https://github.com/RRethy/nvim-base16/issues/62 breaks 0.7 compat.
+      commit = "d2a5667",
       config = function()
         vim.cmd("colorscheme base16-default-dark")
       end,
@@ -166,6 +168,7 @@ require("packer").startup({
     -- Treesitter syntax highlighting
     use({
       "nvim-treesitter/nvim-treesitter",
+      tag = "v0.7.2",
       run = ":TSUpdate",
       config = function()
         require("nvim-treesitter.configs").setup({
@@ -188,6 +191,7 @@ require("packer").startup({
         "WhoIsSethDaniel/mason-tool-installer.nvim",
         {
           "jose-elias-alvarez/null-ls.nvim",
+          branch = "0.7-compat",
           requires = "nvim-lua/plenary.nvim",
         },
         {
@@ -217,7 +221,6 @@ require("packer").startup({
               indent_lines = false,
               use_diagnostic_signs = true,
               signs = { other = "o" },
-
               auto_fold = true,
             })
           end,
@@ -300,7 +303,7 @@ require("packer").startup({
           ui = { border = "single" },
         })
         require("mason-lspconfig").setup({
-          ensure_installed = { "sumneko_lua" },
+          ensure_installed = { "lua_ls" },
         })
         require("mason-tool-installer").setup({
           ensure_installed = { "stylua", "shfmt", "shellcheck" },
@@ -355,8 +358,7 @@ require("packer").startup({
           end
         end
 
-        local capabilities = vim.lsp.protocol.make_client_capabilities()
-        capabilities = require("cmp_nvim_lsp").update_capabilities(capabilities)
+        local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
         -- LSP servers
         local nvim_lsp = require("lspconfig")
@@ -366,7 +368,7 @@ require("packer").startup({
           cmd = { "clangd", "--limit-references=100" },
           root_dir = nvim_lsp.util.root_pattern(".clangd", ".git", "WORKSPACE"),
         })
-        nvim_lsp.sumneko_lua.setup({
+        nvim_lsp.lua_ls.setup({
           on_attach = function(client, bufnr)
             client.resolved_capabilities.document_formatting = false
             client.resolved_capabilities.document_range_formatting = false
@@ -377,7 +379,10 @@ require("packer").startup({
             Lua = {
               runtime = { version = "LuaJIT" },
               diagnostics = { globals = { "vim", "use" } },
-              workspace = { library = vim.api.nvim_get_runtime_file("", true) },
+              workspace = {
+                library = vim.api.nvim_get_runtime_file("", true),
+                checkThirdParty = false,
+              },
               telemetry = { enable = false },
             },
           },
