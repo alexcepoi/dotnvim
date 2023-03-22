@@ -169,7 +169,6 @@ require("packer").startup({
     use({
       "nvim-treesitter/nvim-treesitter",
       tag = "v0.7.2",
-      run = ":TSUpdate",
       config = function()
         require("nvim-treesitter.configs").setup({
           ensure_installed = "all",
