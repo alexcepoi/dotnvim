@@ -212,6 +212,7 @@ require("packer").startup({
         },
         {
           "folke/trouble.nvim",
+          tag = "v1.0.2",
           config = function()
             require("trouble").setup({
               icons = false,
