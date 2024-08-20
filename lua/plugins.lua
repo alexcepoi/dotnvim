@@ -190,7 +190,6 @@ require("packer").startup({
         "WhoIsSethDaniel/mason-tool-installer.nvim",
         {
           "jose-elias-alvarez/null-ls.nvim",
-          branch = "0.7-compat",
           requires = "nvim-lua/plenary.nvim",
         },
         {
@@ -349,7 +348,9 @@ require("packer").startup({
             vim.api.nvim_create_autocmd("BufWritePre", {
               group = augroup_lsp_fmt,
               buffer = bufnr,
-              callback = vim.lsp.buf.formatting_sync,
+              callback = function()
+                vim.lsp.buf.format({ async = false })
+              end,
             })
           end
 
